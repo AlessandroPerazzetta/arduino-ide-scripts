@@ -4,7 +4,7 @@ Scripts to automate arduino ide tasks
 
 ### `run.sh`
 Launches Arduino IDE, setting environment variables for custom profile 
-> **Note (08 apr 2025):** 2.x not yet full portable as 1.x legacy.
+> **Note (08 apr 2025):** 2.x not yet full portable as 1.x legacy. [Issue open on Github](https://github.com/arduino/arduino-ide/issues/122)
 
 ### `download_latest.sh`
 Downloads latest release of Arduino IDE from official github repository (grab latest release).
