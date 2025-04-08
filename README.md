@@ -1,4 +1,4 @@
-# arduino-ide-scripts
+# Arduino IDE scripts
 Scripts to automate arduino ide tasks
 ## Scripts
 
