@@ -52,8 +52,8 @@ show_help() {
     printf "  destination_dir    Directory where Arduino IDE will be extracted\n"
     printf "  latest_naming      Optional: Use 'latest_naming' instead of version number\n"
     printf "\nExample:\n"
-    printf "  $0 /opt\n"
-    printf "  $0 /opt latest_naming\n"
+    printf "  $0 /opt/\n"
+    printf "  $0 /opt/ latest_naming\n"
     exit 1
 }
 
