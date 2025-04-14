@@ -12,6 +12,39 @@
 #     curl -L "$url" -o "/tmp/arduino_${version}.zip"
 # done
 
+# Define color codes
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+clear
+
+# Function to print messages with colors
+print_message() {
+    local type=$1
+    local message=$2
+    
+    case $type in
+        "ERROR")
+            printf "\n${RED}[ERROR] ${message}${NC}\n"
+            ;;
+        "WARNING")
+            printf "\n${YELLOW}[WARNING] ${message}${NC}\n"
+            ;;
+        "INFO")
+            printf "\n${CYAN}[INFO] ${message}${NC}\n"
+            ;;
+        "SUCCESS")
+            printf "\n${GREEN}[SUCCESS] ${message}${NC}\n"
+            ;;
+        *)
+            printf "\n${message}\n"
+            ;;
+    esac
+}
+
 # Function to display help message
 show_help() {
     printf "Usage: $0 <destination_dir> [latest_naming]\n"
@@ -45,10 +78,10 @@ files_to_download=$(curl -s https://api.github.com/repos/arduino/arduino-ide/rel
 for url in $files_to_download; do
     filename=$(basename "$url")
     if [ -f "/tmp/$filename" ]; then
-        printf "File already exists: /tmp/$filename\n"
+        print_message "WARNING" "File already exists: /tmp/$filename\n"
         read -p "Do you want to download again? (y/n): " choice
         if [[ "$choice" != "y" && "$choice" != "Y" ]]; then
-            printf "Skipping download of $filename\n"
+            print_message "INFO" "Skipping download of $filename\n"
             files_to_download=$(echo "$files_to_download" | grep -v "$url")
         fi
     fi
@@ -58,7 +91,7 @@ done
 echo "$files_to_download" | while read -r url; do
     if [ -n "$url" ]; then
         filename=$(basename "$url")
-        printf "Downloading Arduino IDE: $filename\n"
+        print_message "INFO" "Downloading Arduino IDE: $filename\n"
         curl -L "$url" -o "/tmp/$filename" --progress-bar
     fi
 done
@@ -66,22 +99,22 @@ done
 # After downloading, ask to decompress
 read -p "Do you want to extract the downloaded file? (y/n): " choice
 if [[ "$choice" != "y" && "$choice" != "Y" ]]; then
-    printf "Skipping extraction.\n"
+    print_message "INFO" "Skipping extraction.\n"
     exit 0
 fi
 # Check if the file is empty
 if [ ! -s "/tmp/$filename" ]; then
-    printf "File is empty: /tmp/$filename\n"
+    print_message "WARNING" "File is empty: /tmp/$filename\n"
     exit 1
 fi
 # Check if unzip is installed
 if ! command -v unzip &> /dev/null; then
-    printf "unzip could not be found. Please install unzip.\n"
+    print_message "ERROR" "unzip could not be found. Please install unzip.\n"
     exit 1
 fi
 # Check if the file is a valid zip file
 if ! unzip -t "/tmp/$filename" &> /dev/null; then
-    printf "File is not a valid zip file: /tmp/$filename\n"
+    print_message "ERROR" "File is not a valid zip file: /tmp/$filename\n"
     exit 1
 fi
 
@@ -96,22 +129,24 @@ target_dir="$destination_dir/arduino-$version"
 
 # Check if the target directory already exists
 if [ -d "$target_dir" ]; then
-    printf "Target directory already exists: $target_dir\n"
-    read -p "Confirm to cleaning target directory ($target_dir)? (!!!DANGEROUS!!!) (y/n): " choice
+    print_message "WARNING" "Target directory already exists: $target_dir\n"
+    print_message "WARNING" "(!!!DANGEROUS!!!) This will delete the target directory and all its contents.\n"
+    read -p "Confirm to cleaning target directory ($target_dir)? (y/n): " choice
     if [[ "$choice" != "y" && "$choice" != "Y" ]]; then
-        printf "Exit, no cleaning and no extraction.\n"
+        print_message "INFO" "Exit, no cleaning and no extraction.\n"
         exit 1
     else
-        printf "Cleaning target directory: $target_dir\n"
+        print_message "INFO" "Cleaning target directory: $target_dir\n"
         rm -rf "$target_dir"
-        printf "Target directory cleaned.\n"
+        print_message "SUCCESS" "Target directory cleaned.\n"
     fi
 fi
 
 # Create the target directory
 mkdir -p "$target_dir"
 
-printf "Extracting %s to %s...\n" "/tmp/$filename" "$target_dir"
+# print_message "INFO" "Extracting %s to %s...\n" "/tmp/$filename" "$target_dir"
+print_message "INFO" "Extracting /tmp/$filename to $target_dir...\n"
 # unzip "/tmp/$filename" -d "$target_dir"
 
 # unzip -o "/tmp/$filename" -d "$target_dir" | while read -r line; do
@@ -124,11 +159,11 @@ unzip -q -o "/tmp/$filename" -d "$target_dir"
 
 # Check if the extraction was successful
 if [ $? -ne 0 ]; then
-    printf "Failed to extract: /opt/$filename\n"
+    print_message "ERROR" "Failed to extract: /opt/$filename\n"
     exit 1
 fi
 
-printf "Arduino IDE extracted to: $target_dir\n"
+print_message "SUCCESS" "Arduino IDE extracted to: $target_dir\n"
 
 # Extract the filename without zip extension
 filename_unzipped=$(basename "$url")
@@ -138,19 +173,19 @@ fi
 
 # Cleaning target dir
 if [ -d "$target_dir/${filename_unzipped}" ]; then
-    printf "Target dir has subdirectory ${filename_unzipped}, moving content one level up\n"
+    print_message "WARNING" "Target dir has subdirectory ${filename_unzipped}, moving content one level up\n"
     mv $target_dir/${filename_unzipped}/* $target_dir
     rm -rf $target_dir/${filename_unzipped}
-    printf "Target dir cleaned\n"
+    print_message "SUCCESS" "Target dir cleaned\n"
 else
-    printf "Target is clean\n"
+    print_message "SUCCESS" "Target is clean\n"
     exit 1
 fi
 
 # Ask to confirm creation of desktop entry
 read -p "Do you want to create a desktop entry? (y/n): " choice
 if [[ "$choice" != "y" && "$choice" != "Y" ]]; then
-    printf "Skipping desktop entry creation.\n"
+    print_message "INFO" "Skipping desktop entry creation.\n"
     exit 0
 fi
 
@@ -169,15 +204,24 @@ fi
 # Check if the desktop entry already exists
 desktop_entry_path="$HOME/Desktop/Arduino/$display_name.desktop"
 if [ -f "$desktop_entry_path" ]; then
-    printf "Desktop entry already exists: $desktop_entry_path\n"
+    print_message "WARNING" "Desktop entry already exists: $desktop_entry_path\n"
     read -p "Do you want to overwrite it? (y/n): " choice
     if [[ "$choice" != "y" && "$choice" != "Y" ]]; then
-        printf "Skipping desktop entry creation.\n"
+        print_message "INFO" "Skipping desktop entry creation.\n"
         exit 0
     fi
 fi
+
+# Try to delete the existing desktop entry
+if [ -f "$desktop_entry_path" ]; then
+    if ! rm "$desktop_entry_path"; then
+        print_message "ERROR" "Failed to delete existing desktop entry: $desktop_entry_path"
+        exit 1
+    fi
+fi
+
 # Create the desktop entry
-cat << EOF | sudo tee "$desktop_entry_path" > /dev/null
+cat << EOF | tee "$desktop_entry_path" > /dev/null
 [Desktop Entry]
 Type=Application
 Name=Arduino IDE
@@ -195,4 +239,4 @@ EOF
 
 # Make the desktop entry executable
 chmod +x "$desktop_entry_path"
-printf "Desktop entry created: $desktop_entry_path\n"
+print_message "SUCCESS" "Desktop entry created: $desktop_entry_path\n"
