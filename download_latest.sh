@@ -146,3 +146,53 @@ else
     printf "Target is clean\n"
     exit 1
 fi
+
+# Ask to confirm creation of desktop entry
+read -p "Do you want to create a desktop entry? (y/n): " choice
+if [[ "$choice" != "y" && "$choice" != "Y" ]]; then
+    printf "Skipping desktop entry creation.\n"
+    exit 0
+fi
+
+# Create a desktop entry on the system
+# Get the display name with version
+if [ "$use_latest_naming" = true ]; then
+    display_version="latest"
+else
+    display_version="$version"
+fi
+display_name="Arduino IDE - $display_version"
+# Create the directory for the desktop entry
+if [ ! -d "$HOME/Desktop/Arduino" ]; then
+    mkdir -p "$HOME/Desktop/Arduino"
+fi
+# Check if the desktop entry already exists
+desktop_entry_path="$HOME/Desktop/Arduino/$display_name.desktop"
+if [ -f "$desktop_entry_path" ]; then
+    printf "Desktop entry already exists: $desktop_entry_path\n"
+    read -p "Do you want to overwrite it? (y/n): " choice
+    if [[ "$choice" != "y" && "$choice" != "Y" ]]; then
+        printf "Skipping desktop entry creation.\n"
+        exit 0
+    fi
+fi
+# Create the desktop entry
+cat << EOF | sudo tee "$desktop_entry_path" > /dev/null
+[Desktop Entry]
+Type=Application
+Name=Arduino IDE
+GenericName=Arduino IDE
+Comment=Open-source electronics prototyping platform
+Exec="$target_dir/arduino-ide"
+Icon=$target_dir/resources/app/resources/icons/512x512.png
+Terminal=true
+Categories=Development;IDE;Electronics;
+MimeType=text/x-arduino;
+Keywords=embedded electronics;electronics;avr;microcontroller;
+StartupWMClass=processing-app-Base
+Name[en_US]=Arduino IDE - $display_version
+EOF
+
+# Make the desktop entry executable
+chmod +x "$desktop_entry_path"
+printf "Desktop entry created: $desktop_entry_path\n"
