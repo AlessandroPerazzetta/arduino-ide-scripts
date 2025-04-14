@@ -9,11 +9,15 @@ Launches Arduino IDE, setting environment variables for custom profile
 ### `download_latest.sh`
 Downloads latest release of Arduino IDE from official github repository (grab latest release).
 
+### `backup_homedirs.sh`
+Backup arduino related directory from user's home
+Specify destination dir (optional, default on $HOME)
+
 ## Usage
 
 1. Make scripts executable:
 ```bash
-chmod +x run.sh download_latest.sh
+chmod +x run.sh download_latest.sh backup_homedirs.sh
 ```
 
 2. Download Arduino IDE:
@@ -25,3 +29,8 @@ chmod +x run.sh download_latest.sh
 ```bash
 ./run.sh latest
 ```
+
+3. Backup:
+```bash
+./backup_homedirs.sh /destination_backup_dir/
+``````
